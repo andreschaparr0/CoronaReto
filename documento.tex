@@ -1,0 +1,80 @@
+\documentclass[twocolumn]{article}
+\usepackage{graphicx}
+\usepackage{tikz}
+\usepackage{geometry}
+\usepackage{xcolor}
+\usepackage{lmodern}
+\usepackage[spanish]{babel}
+\usepackage{setspace}
+\usepackage{listings}
+\usepackage{float}
+\usepackage{amsmath}
+\usepackage{multirow}
+\usepackage{fancyhdr} 
+\usepackage{ragged2e}
+
+\lstset{
+  language=Python,
+  basicstyle=\ttfamily\small,
+  keywordstyle=\color{blue}\bfseries,
+  stringstyle=\color{orange},
+  commentstyle=\color{gray},
+  numbers=none,
+  numberstyle=\tiny,
+  stepnumber=1,
+  numbersep=5pt,
+  backgroundcolor=\color{white},
+  frame=none,
+  breaklines=true,
+  captionpos=b,
+  showspaces=false,
+  showstringspaces=false,
+  tabsize=1
+}
+
+% Configuración de márgenes
+\geometry{a4paper, margin=1cm}
+
+% Configuración de la fuente
+\renewcommand*\familydefault{\sfdefault}
+
+% Configuración del encabezado solo para la portada
+
+
+\begin{document}
+\twocolumn[\begin{@twocolumnfalse}
+
+
+\begin{minipage}{0.13\textwidth}{
+    \includegraphics[width=3cm]{uniandes.png}}
+\end{minipage}
+\hspace{25pt}
+\begin{minipage}{0.75\textwidth}
+\vspace{5mm}
+    \Large{\textbf{Reto Corona}} 
+    \vspace{3mm}
+    
+    \large{\textbf{Estudiantes:} Chaparro Diaz, Andres; Bernal, Juan Andres} 
+    
+    \large{\textbf{Profesor:} Amaya Gomez: Rafale}
+
+    \fontsize{0.35cm}{0.5cm}\selectfont \textit{Departamento de Ingenieria Industrial, Universidad de los Andes}
+    
+    \today % FECHA
+
+\end{minipage}
+
+\small
+
+\vspace{11pt}
+
+\centerline{\rule{0.95\textwidth}{0.4pt}}
+
+
+\vspace{15pt}
+\end{@twocolumnfalse}]
+\section{Introducción}
+
+
+
+\end{document}
