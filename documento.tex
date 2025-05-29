@@ -75,6 +75,248 @@
 \end{@twocolumnfalse}]
 \section{Introducción}
 
+En la era digital actual, la personalización y la eficiencia operativa se han convertido en factores determinantes para el éxito empresarial. Las organizaciones enfrentan el desafío de aprovechar grandes volúmenes de datos para optimizar su oferta y mejorar la experiencia del cliente. En este contexto, los sistemas de recomendaciones inteligentes emergen como una solución estratégica que impulsa la satisfacción del consumidor y maximiza los ingresos.
 
+El presente trabajo documenta el desarrollo de una solución analítica para Corona, empresa líder en materiales de construcción, implementando sistemas de recomendaciones personalizadas para los segmentos B2C y B2B. Este proyecto surge como respuesta al reto planteado por la Universidad de los Andes en colaboración con Corona, buscando crear valor real para el consumidor a través de metodologías analíticas innovadoras.
+
+La problemática central radica en la falta de personalización efectiva en la experiencia del cliente y la optimización insuficiente de la oferta de productos. Las empresas del sector enfrentan desafíos para identificar y recomendar productos de manera precisa y escalable, limitando el potencial de ventas cruzadas y ascendentes.
+
+Para abordar esta problemática, se desarrollaron tres algoritmos de recomendación especializados: dos algoritmos B2C donde uno recibe como input un producto específico y otro recibe el ID del comprador para recomendaciones personalizadas; y un algoritmo B2B que recibe como input un producto para generar recomendaciones en el contexto empresarial. Cada algoritmo utiliza técnicas de machine learning adaptadas a las características específicas de cada segmento de mercado.
+
+Este documento presenta la metodología desarrollada, los resultados obtenidos y las propuestas estratégicas implementadas, demostrando el potencial de los sistemas de recomendación inteligentes para transformar la experiencia del cliente en el sector de materiales de construcción.
+
+\section{Descripción de los Datos}
+
+El desarrollo de los algoritmos de recomendación se fundamenta en el análisis de tres datasets principales proporcionados por Corona, cada uno correspondiente a diferentes segmentos de negocio y tipos de interacción con clientes. Estos conjuntos de datos abarcan tanto transacciones efectivas como cotizaciones en el segmento B2C, además de las operaciones del canal B2B.
+
+\subsection{Dataset de Transacciones B2C}
+
+Este dataset constituye la fuente principal de información con \textbf{2,099,836 registros} que representan ventas efectivas a consumidores finales. Contiene información detallada sobre \textbf{419,226 clientes únicos} y \textbf{7,280 productos únicos}, distribuidos en 18 variables que incluyen datos demográficos, geográficos, del producto y de la transacción. El valor total de las ventas registradas asciende a \textbf{\$83,975,996}, con un valor promedio por transacción de \$40.
+
+Las variables clave incluyen identificación del cliente, datos demográficos (edad), información geográfica (municipio, zona), características del producto (categoría macro, categoría, subcategoría, color), y métricas de venta (cantidad, precio, valor total). Adicionalmente, incorpora la variable "alineación con portafolio estratégico" que indica el grado de ajuste del producto con la estrategia empresarial de Corona.
+
+\subsection{Dataset de Cotizaciones B2C}
+
+Complementando las transacciones efectivas, este dataset registra \textbf{180,387 cotizaciones} realizadas por \textbf{57,184 clientes únicos}, abarcando \textbf{2,735 productos únicos}. El valor total cotizado alcanza \textbf{\$6,657,250} con un valor promedio por cotización de \$37. Las cotizaciones se clasifican en cuatro estados: Ganada, Expirada, Perdida y Abierta, proporcionando insights valiosos sobre el proceso de conversión de ventas.
+
+Esta base de datos permite analizar el comportamiento de intención de compra y la efectividad del proceso comercial, siendo fundamental para algoritmos de recomendación que consideren tanto compras efectivas como intereses manifestados por los clientes.
+
+\subsection{Dataset de Transacciones B2B}
+
+El segmento B2B está representado por \textbf{25,866 registros} correspondientes a \textbf{6 clientes empresariales} que operan como intermediarios hacia el consumidor final. Este dataset incluye \textbf{2,564 productos únicos} distribuidos en \textbf{31 categorías macro B2B}, con un valor total de transacciones de \textbf{\$39,729,642} y un valor promedio significativamente superior de \$1,536 por transacción.
+
+La estructura categórica del segmento B2B difiere del B2C, reflejando las necesidades específicas del canal mayorista. Las categorías, subcategorías y productos están adaptadas a las dinámicas de compra empresarial, donde los volúmenes y valores unitarios son considerablemente mayores.
+
+\subsection{Características Generales y Calidad de los Datos}
+
+El análisis exploratorio reveló una alta calidad en los datos, con ausencia de valores faltantes significativos en las variables principales. Es importante mencionar que los datasets han sido sometidos a un proceso de \textbf{anonimización y transformación} por parte de Corona para proteger la confidencialidad empresarial. Este proceso incluye la codificación de nombres de productos (e.g., "producto\_125", "producto\_634"), alteración de fechas reales, y enmascaramiento de información sensible mediante técnicas de ETL (Extract, Transform, Load).
+
+A pesar de estas transformaciones, las \textbf{relaciones estructurales y patrones de comportamiento} se mantienen intactos, permitiendo el desarrollo efectivo de algoritmos de recomendación. La distribución temporal, aunque alterada, conserva la secuencialidad y patrones estacionales necesarios para el análisis. La Figura \ref{fig:analisis_exploratorio} presenta un resumen visual de las principales características de cada dataset, incluyendo la distribución de categorías macro y el volumen relativo de registros.
+
+Los datos presentan una estructura jerárquica clara en las categorías de productos (macro → categoría → subcategoría), facilitando la implementación de algoritmos de recomendación por contenido. La diversidad geográfica (808 municipios, 34 zonas) y la variedad de productos permiten desarrollar estrategias de personalización tanto a nivel local como de preferencias individuales, manteniendo la representatividad del negocio real de Corona.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\columnwidth]{output.png}
+\caption{Análisis exploratorio de los datasets principales: distribución de categorías macro y volumen de registros por tipo de dataset.}
+\label{fig:analisis_exploratorio}
+\end{figure}
+
+\section{Metodología}
+
+El desarrollo de la solución de recomendaciones para Corona se fundamenta en un enfoque híbrido innovador que combina múltiples técnicas de machine learning, diseñado específicamente para abordar las necesidades diferenciadas de los segmentos B2C y B2B. Esta metodología se distingue por su capacidad de adaptación al contexto empresarial actual, donde la personalización y la eficiencia operativa son factores determinantes del éxito comercial.
+
+\subsection{Marco Conceptual del Sistema Híbrido}
+
+La arquitectura propuesta implementa un sistema de recomendaciones multi-algoritmo que se adapta dinámicamente según el contexto de uso y la información disponible. Esta aproximación supera las limitaciones de los sistemas tradicionales de recomendación que se basan en una sola técnica, aprovechando las fortalezas específicas de cada método para diferentes escenarios de negocio.
+
+El sistema se estructura en tres componentes principales, cada uno optimizado para un caso de uso específico:
+
+\textbf{Algoritmo B2C General (Recomendación por Producto):} Diseñado para escenarios donde el input es un producto específico y se requieren recomendaciones complementarias. Este enfoque es ideal para asesores de venta en puntos físicos que buscan sugerir productos adicionales a partir de un interés inicial del cliente, maximizando las oportunidades de venta cruzada.
+
+\textbf{Algoritmo B2C Personalizado (Recomendación por Cliente):} Implementa filtrado colaborativo avanzado utilizando el historial de compras y cotizaciones del cliente. Este componente es fundamental para la personalización profunda, permitiendo recomendaciones altamente relevantes basadas en patrones de comportamiento individuales y preferencias demostradas.
+
+\textbf{Algoritmo B2B (Recomendación Empresarial):} Especializado en el contexto B2B, incorpora variables estratégicas como alineación con portafolio, co-ocurrencia ponderada por valor total, y similitud categórica. Este algoritmo está optimizado para las dinámicas de compra empresarial, donde los volúmenes y la estrategia corporativa son factores críticos.
+
+\subsection{Justificación Técnica y Ventajas Competitivas}
+
+La metodología desarrollada presenta ventajas significativas frente a aproximaciones tradicionales de recomendación. Mientras que los sistemas convencionales típicamente implementan un solo algoritmo (filtrado colaborativo o basado en contenido), nuestra solución híbrida combina múltiples técnicas para maximizar la precisión y relevancia de las recomendaciones.
+
+\textbf{Adaptabilidad Contextual:} El sistema selecciona automáticamente el algoritmo más apropiado según la información disponible y el contexto de uso, evitando las limitaciones del "cold start problem" y optimizando la experiencia tanto para clientes nuevos como recurrentes.
+
+\textbf{Incorporación de Variables de Negocio:} A diferencia de los sistemas académicos tradicionales, la solución integra métricas específicas del negocio como alineación estratégica, valor económico de transacciones, y patrones de co-compra/co-cotización, asegurando que las recomendaciones estén alineadas con objetivos comerciales.
+
+\textbf{Escalabilidad y Eficiencia:} La implementación incluye técnicas de pre-cálculo y optimización que permiten respuestas en tiempo real, crucial para la experiencia del usuario en puntos de venta físicos y plataformas digitales.
+
+\subsection{Alineación con Objetivos Estratégicos de Corona}
+
+El diseño metodológico responde directamente a los desafíos identificados en el reto Corona, proporcionando soluciones concretas para cada objetivo estratégico:
+
+\textbf{Mejora de la Experiencia del Cliente:} Los algoritmos B2C generan recomendaciones personalizadas que reducen el tiempo de búsqueda y aumentan la probabilidad de encontrar productos relevantes, mejorando significativamente la satisfacción del cliente.
+
+\textbf{Incremento de Ventas:} La combinación de recomendaciones por producto y por cliente maximiza las oportunidades de venta cruzada y ascendente, mientras que el algoritmo B2B optimiza los volúmenes de compra empresarial considerando la alineación estratégica del portafolio.
+
+\textbf{Optimización Operativa:} El sistema proporciona herramientas valiosas para asesores de venta, permitiéndoles hacer recomendaciones más informadas y precisas, reduciendo el tiempo de atención y aumentando la efectividad comercial.
+
+\textbf{Diferenciación Competitiva:} La implementación de un sistema híbrido avanzado posiciona a Corona como líder tecnológico en el sector, proporcionando una ventaja competitiva sostenible basada en la personalización y la inteligencia de datos.
+
+La metodología propuesta no solo aborda los requerimientos técnicos del reto, sino que establece una base sólida para la transformación digital de los procesos comerciales de Corona, generando valor tanto para la empresa como para sus clientes en un mercado cada vez más competitivo y orientado hacia la personalización.
+
+\section{Ingeniería de Características}
+
+La implementación exitosa de los algoritmos de recomendación requirió un proceso exhaustivo de ingeniería de características que transformó los datos transaccionales en variables predictivas optimizadas para cada componente del sistema híbrido. Este proceso se estructura en tres fases principales: unificación y limpieza de datos, creación de variables derivadas, y preparación específica para cada algoritmo.
+
+\subsection{Unificación y Preprocesamiento de Datos}
+
+El primer desafío consistió en integrar las múltiples fuentes de información B2C (transacciones y cotizaciones) para crear una vista unificada del comportamiento del cliente. Esta unificación es crítica para el funcionamiento del algoritmo B2C personalizado, que requiere una comprensión completa de las interacciones históricas de cada cliente.
+
+\textbf{Proceso de Unificación B2C:} Se desarrolló un proceso de merge inteligente que combina transacciones efectivas y cotizaciones por cliente, preservando la información temporal y contextual de cada interacción. Este enfoque permite al sistema considerar tanto compras confirmadas como intenciones de compra, proporcionando una visión más rica del comportamiento del cliente.
+
+\textbf{Limpieza y Estandarización:} Se implementaron rutinas de limpieza que manejan inconsistencias en la codificación de productos, normalizan formatos de fechas (considerando la anonimización temporal), y eliminan registros duplicados o inválidos. La estandarización de variables categóricas aseguró la coherencia necesaria para los algoritmos de similitud.
+
+\textbf{Manejo de Datos Faltantes:} Se desarrollaron estrategias específicas para imputar valores faltantes, utilizando técnicas como imputación por moda para variables categóricas y imputación por mediana para variables numéricas, preservando las distribuciones originales de los datos.
+
+\subsection{Creación de Variables Derivadas}
+
+La efectividad de los algoritmos de recomendación depende significativamente de la calidad de las características disponibles. Se diseñó un conjunto robusto de variables derivadas que capturan patrones de comportamiento, popularidad de productos, y métricas de negocio relevantes.
+
+\textbf{Variables de Popularidad y Frecuencia:}
+\begin{itemize}
+    \item \textit{Popularidad por categoría}: Frecuencia relativa de cada producto dentro de su categoría
+    \item \textit{Popularidad global}: Posición del producto en términos de volumen total de ventas
+    \item \textit{Frecuencia de venta}: Número de transacciones únicas por producto
+    \item \textit{Frecuencia de cliente}: Número de clientes únicos que han adquirido cada producto
+\end{itemize}
+
+\textbf{Variables de Valor y Rentabilidad:}
+\begin{itemize}
+    \item \textit{Valor promedio por transacción}: Precio promedio histórico por producto
+    \item \textit{Valor total generado}: Ingresos totales atribuibles a cada producto
+    \item \textit{Rentabilidad relativa}: Contribución del producto al portafolio total
+\end{itemize}
+
+\textbf{Variables de Interacción Cliente-Producto:}
+\begin{itemize}
+    \item \textit{Historial de compras por cliente}: Registro temporal de adquisiciones
+    \item \textit{Historial de cotizaciones}: Productos cotizados pero no necesariamente comprados
+    \item \textit{Preferencias categóricas}: Categorías macro y específicas preferidas por cliente
+\end{itemize}
+
+\subsection{Preparación Específica por Algoritmo}
+
+Cada componente del sistema híbrido requiere transformaciones específicas optimizadas para su técnica subyacente, lo que maximiza el rendimiento individual y la efectividad del conjunto.
+
+\textbf{Algoritmo B2C General (Basado en Contenido):}
+Para este algoritmo se implementó un enfoque de similitud basado en características de producto. Se seleccionaron variables numéricas clave como precio promedio, alineación estratégica, métricas de popularidad, y variables categóricas como categoría macro, categoría específica, subcategoría y color. La transformación incluyó normalización MinMax para variables numéricas y codificación One-Hot para variables categóricas, creando una matriz de características que permite calcular similitudes mediante métricas como similitud coseno.
+
+\textbf{Algoritmo B2C Personalizado (Filtrado Colaborativo):}
+Se construyeron matrices de co-ocurrencia basadas en patrones de compra y cotización conjunta. El proceso incluye la identificación de productos frecuentemente adquiridos juntos, ponderación por frecuencia de co-ocurrencia, y normalización por popularidad individual para evitar sesgos hacia productos de alta demanda. Adicionalmente, se implementó un sistema de fallback que utiliza popularidad adaptativa cuando no hay suficiente información colaborativa.
+
+\textbf{Algoritmo B2B (Optimizado para Contexto Empresarial):}
+La preparación para el segmento B2B incorpora variables específicas del contexto empresarial como co-ocurrencia ponderada por valor total, alineación con portafolio estratégico B2B, y similitud categórica jerárquica. Se implementó un sistema de puntuación múltiple que combina estos factores para generar recomendaciones optimizadas para las dinámicas de compra empresarial.
+
+\subsection{Validación y Optimización}
+
+El proceso de ingeniería de características incluyó validaciones continuas para asegurar la calidad y relevancia de las variables creadas. Se implementaron métricas de correlación para identificar redundancias, análisis de distribución para detectar outliers, y pruebas de efectividad predictiva para validar el valor añadido de cada característica.
+
+La optimización iterativa del pipeline de características permitió reducir la dimensionalidad manteniendo el poder predictivo, optimizar los tiempos de procesamiento, y asegurar la escalabilidad del sistema para volúmenes de datos crecientes. Este enfoque sistemático garantiza que los algoritmos de recomendación operen con la información más relevante y bien estructurada posible.
+
+Esta metodología de ingeniería de características no solo garantiza la calidad y consistencia de los datos, sino que también establece las bases para algoritmos de recomendación robustos y escalables, optimizados para diferentes escenarios de uso en el contexto de Corona.
+
+\section{Desarrollo de Algoritmos}
+
+La implementación de la solución de recomendaciones se materializa a través de tres algoritmos especializados, cada uno diseñado para abordar escenarios específicos de negocio. El componente central y más sofisticado es el \textbf{sistema híbrido B2C}, que combina múltiples técnicas de machine learning para generar recomendaciones precisas y contextuales.
+
+\subsection{Algoritmo Híbrido B2C - Componente Principal}
+
+El algoritmo híbrido B2C representa la innovación principal de esta solución, implementando un enfoque multi-algoritmo que combina cuatro métodos complementarios de recomendación. Esta arquitectura híbrida permite aprovechar las fortalezas individuales de cada técnica mientras mitiga sus limitaciones inherentes.
+
+\subsubsection{Componentes del Sistema Híbrido}
+
+\textbf{1. Motor de Recomendaciones por Contenido (Content-Based)}
+
+El componente basado en contenido utiliza similitud coseno entre vectores de características de productos para identificar items similares. El proceso incluye:
+
+\begin{itemize}
+    \item \textbf{Preprocesamiento avanzado}: Aplicación de \texttt{MinMaxScaler} a 17 variables numéricas cuidadosamente seleccionadas, incluyendo métricas de precio, popularidad, frecuencia de venta y alineación estratégica.
+    \item \textbf{Cálculo de similitud}: Generación de una matriz de similitud coseno de dimensiones 7,221 × 7,221 que captura las relaciones entre todos los productos del catálogo.
+    \item \textbf{Optimización temporal}: Implementación eficiente que permite generar recomendaciones en menos de 0.02 segundos por consulta.
+\end{itemize}
+
+\textbf{2. Motor Colaborativo por Co-Compra}
+
+Este componente analiza patrones de compra conjunta en transacciones históricas:
+
+\begin{itemize}
+    \item \textbf{Matriz de co-ocurrencia}: Construcción de una matriz dispersa que registra la frecuencia con que productos aparecen juntos en el mismo pedido.
+    \item \textbf{Filtrado colaborativo}: Identificación de productos frecuentemente adquiridos junto al item de consulta.
+    \item \textbf{Escalabilidad}: Procesamiento eficiente de más de 2 millones de transacciones históricas.
+\end{itemize}
+
+\textbf{3. Motor Colaborativo por Co-Cotización}
+
+Incorpora información de cotizaciones para capturar intención de compra:
+
+\begin{itemize}
+    \item \textbf{Análisis de intención}: Procesamiento de 178,378 cotizaciones para identificar productos consultados conjuntamente.
+    \item \textbf{Complementariedad}: Captura patrones de interés que pueden no manifestarse en transacciones completadas.
+\end{itemize}
+
+\textbf{4. Motor de Popularidad Adaptativa}
+
+Diseñado específicamente para productos nuevos (cold start) y como mecanismo de respaldo:
+
+\begin{itemize}
+    \item \textbf{Jerarquía categórica}: Implementa una cascada de recomendaciones que prioriza subcategoría → categoría → categoría macro → popularidad global.
+    \item \textbf{Métricas múltiples}: Utiliza tanto unidades vendidas como valor total de ventas para diversificar recomendaciones.
+\end{itemize}
+
+\subsubsection{Algoritmo de Fusión Híbrida}
+
+El núcleo innovador del sistema reside en su \textbf{mecanismo de re-ranking adaptativo}, que combina las recomendaciones individuales mediante la siguiente formulación matemática:
+
+\[
+\text{score\_híbrido}(p) = \sum_{i \in \{content, copurchase, coquote, popularity\}} w_i \cdot \frac{1}{\text{rank}_i(p) + k}
+\]
+
+donde:
+\begin{itemize}
+    \item $w_i$ representa el peso asignado al método $i$
+    \item $\text{rank}_i(p)$ es la posición del producto $p$ en la lista del método $i$
+    \item $k$ es una constante de suavizado (típicamente $k=2$) que evita dominancia excesiva de las primeras posiciones
+\end{itemize}
+
+\textbf{Lógica Adaptativa de Pesos}
+
+El sistema implementa una estrategia de pesos dinámicos que se ajusta según el contexto:
+
+\begin{itemize}
+    \item \textbf{Productos existentes con alta actividad}: $w_{content} = 0.3$, $w_{copurchase} = 0.5$, $w_{coquote} = 0.2$
+    \item \textbf{Productos con baja co-compra}: Incremento automático del peso de contenido para compensar la escasez de información colaborativa
+    \item \textbf{Productos nuevos}: $w_{popularity} = 1.0$, delegando completamente al motor de popularidad adaptativa
+\end{itemize}
+
+\subsubsection{Optimizaciones de Rendimiento}
+
+La implementación incorpora múltiples optimizaciones para garantizar escalabilidad empresarial:
+
+\begin{itemize}
+    \item \textbf{Matrices dispersas}: Uso de \texttt{scipy.sparse} para almacenamiento eficiente de matrices de co-ocurrencia
+    \item \textbf{Vectorización}: Aprovechamiento de operaciones vectorizadas de NumPy para cálculos de similitud
+    \item \textbf{Caché inteligente}: Pre-cálculo de similitudes de contenido para reducir latencia en tiempo real
+    \item \textbf{Filtrado top-K}: Implementación de algoritmos de selección parcial para evitar ordenamientos completos innecesarios
+\end{itemize}
+
+\subsection{Algoritmos Complementarios}
+
+\textbf{Algoritmo B2C Específico por Cliente}
+
+Especializado en recomendaciones personalizadas basadas en el historial de compras del cliente, implementando filtrado colaborativo usuario-item con técnicas de factorización matricial.
+
+\textbf{Algoritmo B2B}
+
+Diseñado para el canal empresarial, incorporando métricas específicas como volumen de compra, estacionalidad y patrones de reposición característicos del mercado B2B.
+
+El conjunto de algoritmos desarrollados establece un ecosistema robusto de recomendaciones que aborda integralmente los requerimientos del negocio, desde productos nuevos hasta clientes con extenso historial, cubriendo tanto el mercado masivo como el empresarial con un enfoque técnicamente sólido y empresarialmente viable.
 
 \end{document}
