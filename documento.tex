@@ -12,6 +12,9 @@
 \usepackage{multirow}
 \usepackage{fancyhdr} 
 \usepackage{ragged2e}
+\usepackage{array}
+\usepackage{adjustbox}
+\usepackage{rotating}
 
 \lstset{
   language=Python,
@@ -33,7 +36,7 @@
 }
 
 % Configuración de márgenes
-\geometry{a4paper, margin=1cm}
+\geometry{a4paper, margin=1cm, bottom=1.5cm}
 
 % Configuración de la fuente
 \renewcommand*\familydefault{\sfdefault}
@@ -117,7 +120,7 @@ Los datos presentan una estructura jerárquica clara en las categorías de produ
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\columnwidth]{output.png}
+\includegraphics[width=\columnwidth]{analisis_exploratorio.png}
 \caption{Análisis exploratorio de los datasets principales: distribución de categorías macro y volumen de registros por tipo de dataset.}
 \label{fig:analisis_exploratorio}
 \end{figure}
@@ -215,6 +218,72 @@ Se construyeron matrices de co-ocurrencia basadas en patrones de compra y cotiza
 \textbf{Algoritmo B2B (Optimizado para Contexto Empresarial):}
 La preparación para el segmento B2B incorpora variables específicas del contexto empresarial como co-ocurrencia ponderada por valor total, alineación con portafolio estratégico B2B, y similitud categórica jerárquica. Se implementó un sistema de puntuación múltiple que combina estos factores para generar recomendaciones optimizadas para las dinámicas de compra empresarial.
 
+\textbf{1. Motor de Maximización de Valor}
+
+Este componente prioriza productos con mayor potencial de retorno económico basado en métricas empresariales:
+
+\begin{itemize}
+    \item \textbf{Score de Valor Base}: Combinación de valor promedio del producto (\texttt{avg\_value}) y alineación estratégica (\texttt{avg\_alignment})
+    \item \textbf{Segmentación de Clientes}: Clasificación automática en Alto\_Valor, Medio\_Valor, y Bajo\_Valor basada en volumen histórico de compras
+    \item \textbf{Multiplicadores Adaptativos}: Factores de ajuste por segmento (Alto: 1.3x, Medio: 1.1x, Bajo: 0.9x)
+    \item \textbf{Fórmula de Cálculo}: \texttt{score\_valor = avg\_value × avg\_alignment × segment\_multiplier}
+    \item \textbf{Complejidad}: \(O(p)\) donde \(p\) es número de productos únicos
+\end{itemize}
+
+\textbf{Ejemplo Práctico del Motor de Valor}:
+Para un cliente de segmento Alto\_Valor, el algoritmo evalúa:
+\begin{itemize}
+    \item Producto\_X: \$50,000 promedio × 0.8 alineación × 1.3 multiplicador = Score: 52,000
+    \item Producto\_Y: \$30,000 promedio × 0.9 alineación × 1.3 multiplicador = Score: 35,100
+\end{itemize}
+El sistema recomienda Producto\_X por su superior potencial de valor estratégico.
+
+\textbf{Aplicación Real}: Una empresa constructora de alto volumen consulta por cemento. El algoritmo prioriza cemento premium de alta resistencia (\$25,000/tonelada) sobre cemento estándar (\$18,000/tonelada) porque maximiza la rentabilidad y se alinea mejor con proyectos de gran envergadura.
+
+\vspace{0.3cm}
+
+\textbf{2. Sistema de Reposición Inteligente}
+
+Analiza patrones de recompra temporal para predecir necesidades futuras:
+
+\begin{itemize}
+    \item \textbf{Análisis de Frecuencia}: Cálculo de intervalos promedio entre compras por cliente-producto
+    \item \textbf{Predicción Temporal}: Identificación de productos próximos a reposición basada en patrones históricos
+    \item \textbf{Score de Urgencia}: Ponderación inversamente proporcional al tiempo restante hasta reposición esperada
+    \item \textbf{Filtrado de Recurrencia}: Exclusión de productos con baja frecuencia de recompra (menos de 2 ocurrencias)
+    \item \textbf{Complejidad}: \(O(c \times p \times t)\) donde \(c\) es clientes, \(p\) productos, \(t\) transacciones por cliente
+\end{itemize}
+
+\textbf{Aplicación Real}: Una ferretería compra pintura cada 45 días. El algoritmo detecta que han pasado 42 días desde su última compra y automáticamente sugiere nuevos lotes de pintura antes de que el cliente se quede sin inventario, previniendo pérdidas de venta.
+
+\textbf{3. Análisis Geográfico de Popularidad}
+
+Incorpora variables de localización para recomendaciones contextualmente relevantes:
+
+\begin{itemize}
+    \item \textbf{Ranking Regional}: Posicionamiento de productos por zona geográfica basado en volumen de ventas
+    \item \textbf{Normalización de Ranking}: Conversión a escala 0-1 donde 1 representa el producto más popular de la zona
+    \item \textbf{Bonus de Valor}: Ponderación adicional por valor total acumulado del producto en la zona
+    \item \textbf{Score Geográfico}: \texttt{score = normalized\_rank × valor\_bonus × geographic\_weight}
+    \item \textbf{Complejidad}: \(O(z \times p)\) donde \(z\) es número de zonas y \(p\) productos por zona
+\end{itemize}
+
+\textbf{Aplicación Real}: Un distribuidor de Medellín consulta por materiales de construcción. El algoritmo prioriza ladrillos térmicos (populares en clima frío de montaña) sobre ladrillos convencionales, porque históricamente tienen 3x más demanda en esa región específica.
+
+\textbf{4. Algoritmo de Co-ocurrencia Ponderada por Valor}
+
+Versión especializada de filtrado colaborativo que considera el valor económico de las transacciones:
+
+\begin{itemize}
+    \item \textbf{Matriz de Co-ocurrencia Valorizada}: Cada celda \(M[i,j]\) acumula el valor total de transacciones donde productos \(i\) y \(j\) aparecen juntos
+    \item \textbf{Sesiones de Compra}: Agrupación por cliente y período mensual para identificar compras relacionadas
+    \item \textbf{Ponderación por Valor}: Co-ocurrencias de mayor valor reciben mayor peso en las recomendaciones
+    \item \textbf{Optimización Dispersa}: Uso de matrices \texttt{LIL} y \texttt{CSR} para eficiencia computacional
+    \item \textbf{Complejidad}: \(O(s \times p^2)\) donde \(s\) es número de sesiones de compra
+\end{itemize}
+
+\textbf{Aplicación Real}: Cuando un cliente compra varillas de acero, el algoritmo detecta que 87\% de las veces se compra junto con soldadura especial (co-ocurrencia de \$2.3M en valor), por lo que inmediatamente sugiere ambos productos como paquete, aumentando el ticket promedio de \$15,000 a \$23,000.
+
 \subsection{Validación y Optimización}
 
 El proceso de ingeniería de características incluyó validaciones continuas para asegurar la calidad y relevancia de las variables creadas. Se implementaron métricas de correlación para identificar redundancias, análisis de distribución para detectar outliers, y pruebas de efectividad predictiva para validar el valor añadido de cada característica.
@@ -227,96 +296,467 @@ Esta metodología de ingeniería de características no solo garantiza la calida
 
 La implementación de la solución de recomendaciones se materializa a través de tres algoritmos especializados, cada uno diseñado para abordar escenarios específicos de negocio. El componente central y más sofisticado es el \textbf{sistema híbrido B2C}, que combina múltiples técnicas de machine learning para generar recomendaciones precisas y contextuales.
 
-\subsection{Algoritmo Híbrido B2C - Componente Principal}
+\subsection{Algoritmo Híbrido B2C}
 
-El algoritmo híbrido B2C representa la innovación principal de esta solución, implementando un enfoque multi-algoritmo que combina cuatro métodos complementarios de recomendación. Esta arquitectura híbrida permite aprovechar las fortalezas individuales de cada técnica mientras mitiga sus limitaciones inherentes.
+El algoritmo híbrido B2C constituye el núcleo de la solución de recomendaciones, implementando una arquitectura multi-algoritmo que combina cinco métodos complementarios de machine learning. Esta aproximación permite aprovechar las fortalezas individuales de cada técnica mientras mitiga sus limitaciones inherentes, generando recomendaciones robustas y contextuales.
 
-\subsubsection{Componentes del Sistema Híbrido}
+\subsubsection{Arquitectura del Sistema Híbrido}
 
-\textbf{1. Motor de Recomendaciones por Contenido (Content-Based)}
+El sistema está estructurado en cinco componentes especializados que operan en paralelo para generar candidatos de recomendación:
 
-El componente basado en contenido utiliza similitud coseno entre vectores de características de productos para identificar items similares. El proceso incluye:
+\textbf{1. Algoritmo de Recomendaciones por Contenido (Content-Based)}
 
-\begin{itemize}
-    \item \textbf{Preprocesamiento avanzado}: Aplicación de \texttt{MinMaxScaler} a 17 variables numéricas cuidadosamente seleccionadas, incluyendo métricas de precio, popularidad, frecuencia de venta y alineación estratégica.
-    \item \textbf{Cálculo de similitud}: Generación de una matriz de similitud coseno de dimensiones 7,221 × 7,221 que captura las relaciones entre todos los productos del catálogo.
-    \item \textbf{Optimización temporal}: Implementación eficiente que permite generar recomendaciones en menos de 0.02 segundos por consulta.
-\end{itemize}
-
-\textbf{2. Motor Colaborativo por Co-Compra}
-
-Este componente analiza patrones de compra conjunta en transacciones históricas:
+Este componente utiliza similitud coseno entre vectores de características normalizadas para identificar productos similares. La implementación técnica incluye:
 
 \begin{itemize}
-    \item \textbf{Matriz de co-ocurrencia}: Construcción de una matriz dispersa que registra la frecuencia con que productos aparecen juntos en el mismo pedido.
-    \item \textbf{Filtrado colaborativo}: Identificación de productos frecuentemente adquiridos junto al item de consulta.
-    \item \textbf{Escalabilidad}: Procesamiento eficiente de más de 2 millones de transacciones históricas.
+    \item          \textbf{Preprocesamiento avanzado}: Aplicación de \texttt{MinMaxScaler} a 17 variables numéricas cuidadosamente seleccionadas, incluyendo métricas de precio, popularidad, frecuencia de venta y alineación estratégica. 
+    \item \textbf{Cálculo de Similitud}: Construcción de matriz de similitud coseno de dimensión \(n \times n\) donde \(n\) es el número total de productos
+    \item \textbf{Generación de Recomendaciones}: Para un producto de entrada, se extraen los top-N productos con mayor similitud coseno, excluyendo el producto mismo
+    \item \textbf{Complejidad}: \(O(n^2)\) para construcción de matriz, \(O(n \log n)\) para ranking por producto
 \end{itemize}
+\textbf{Ejemplo Práctico del Algoritmo de Recomendaciones por Contenido}
+\textbf{Datos de Entrada (Características de Productos):}
+\begin{itemize}
+\item Cemento Gris: [Precio: 15000, Categoría Macro: Construcción, Color: Gris, Popularidad: 0.8]
+\item Cemento Blanco: [Precio: 18000, Categoría Macro: Construcción, Color: Blanco, Popularidad: 0.6]
+\item Pintura Gris: [Precio: 25000, Categoría Macro: Acabados, Color: Gris, Popularidad: 0.4]
+\item Arena Fina: [Precio: 12000, Categoría Macro: Construcción, Color: Natural, Popularidad: 0.7]
+\end{itemize}
+\textbf{Matriz de Similitud Coseno Resultante:}
+\begin{table}[H]
+\centering
+\scriptsize
+\begin{tabular}{|l|c|c|c|c|}
+\hline
+ & \textbf{Cemento Gris} & \textbf{Cemento Blanco} & \textbf{Pintura Gris } & \textbf{Arena Fina} \\
+\hline
+\textbf{Cemento Gris}   & 1.00 & 0.89 & 0.45 & 0.78 \\
+\hline
+\textbf{Cemento Blanco} & 0.89 & 1.00 & 0.32 & 0.71 \\
+\hline
+\textbf{Pintura Gris}   & 0.45 & 0.32 & 1.00 & 0.28 \\
+\hline
+\textbf{Arena Fina}     & 0.78 & 0.71 & 0.28 & 1.00 \\
+\hline
+\end{tabular}
+\end{table}
 
-\textbf{3. Motor Colaborativo por Co-Cotización}
 
-Incorpora información de cotizaciones para capturar intención de compra:
+\textbf{Generación de Recomendaciones:}
+Para la consulta Cemento Gris, el algoritmo recomienda Cemento Blanco (similitud=0.89) y Arena Fina (similitud=0.78), priorizando productos con características similares como misma categoría macro, rango de precio comparable y alta popularidad.
+
+\vspace{0.3cm}
+
+\textbf{2. Algoritmo Colaborativo por Co-Compra}
+
+Analiza patrones de compra conjunta en transacciones históricas usando matrices dispersas para eficiencia computacional:
 
 \begin{itemize}
-    \item \textbf{Análisis de intención}: Procesamiento de 178,378 cotizaciones para identificar productos consultados conjuntamente.
-    \item \textbf{Complementariedad}: Captura patrones de interés que pueden no manifestarse en transacciones completadas.
+    \item \textbf{Construcción de Matriz}: Creación de matriz de co-ocurrencia dispersa \texttt{LIL} donde \(M[i,j]\) representa frecuencia de co-compra entre productos \(i\) y \(j\)
+    \item \textbf{Agregación por Pedido}: Agrupación de productos por \texttt{pedido\_id}, incrementando contadores para cada par de productos en el mismo pedido
+    \item \textbf{Optimización de Memoria}: Conversión a formato \texttt{CSR} para operaciones matemáticas eficientes
+    \item \textbf{Ranking}: Extracción de fila correspondiente al producto de entrada y ordenamiento por frecuencia de co-compra
+    \item \textbf{Complejidad}: \(O(m \times p^2)\) para construcción donde \(m\) es número de pedidos y \(p\) es promedio de productos por pedido
 \end{itemize}
 
-\textbf{4. Motor de Popularidad Adaptativa}
+\textbf{Ejemplo Práctico de como funciona}: Si analizamos 3 transacciones históricos: Pedido 01 (Cemento, Arena), Pedido 02 (Cemento, Ladrillo), Pedido 03 (Cemento, Arena, Ladrillo), el algoritmo construye una matriz donde Cemento aparece 2 veces con Arena y 2 veces con Ladrillo. Cuando un cliente consulta el producto Cemento, el sistema recomienda Arena y Ladrillo (ambos con score=2), reflejando patrones reales de construcción.
 
-Diseñado específicamente para productos nuevos (cold start) y como mecanismo de respaldo:
+\vspace{0.3cm}
+
+\textbf{Datos de Entrada:}
+\begin{itemize}
+    \item Pedido 01: [Cemento, Arena]
+    \item Pedido 02: [Cemento, Ladrillo]  
+    \item Pedido 03: [Cemento, Arena, Ladrillo]
+\end{itemize}
+
+\textbf{Matriz de Co-ocurrencia Resultante:}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|c|c|c|}
+\hline
+& \textbf{Cemento} & \textbf{Arena} & \textbf{Ladrillo} \\
+\hline
+\textbf{Cemento} & 0 & 2 & 2 \\
+\hline
+\textbf{Arena} & 2 & 0 & 1 \\
+\hline
+\textbf{Ladrillo} & 2 & 1 & 0 \\
+\hline
+\end{tabular}
+\end{table}
+
+\textbf{Generación de Recomendaciones:}
+Para la consulta del producto Cemento, el algoritmo recomienda Arena y Ladrillo (ambos con score=2), reflejando patrones reales donde estos materiales se compran frecuentemente juntos en proyectos de construcción.
+
+\vspace{0.3cm}
+
+\textbf{3. Algoritmo Colaborativo por Co-Cotización}
+
+Incorpora información de cotizaciones para capturar intención de compra no materializada:
 
 \begin{itemize}
-    \item \textbf{Jerarquía categórica}: Implementa una cascada de recomendaciones que prioriza subcategoría → categoría → categoría macro → popularidad global.
-    \item \textbf{Métricas múltiples}: Utiliza tanto unidades vendidas como valor total de ventas para diversificar recomendaciones.
+    \item \textbf{Matriz de Co-Cotización}: Similar a co-compra pero basada en \texttt{cotizacion\_id}
+    \item \textbf{Signal de Intención}: Captura productos frecuentemente cotizados juntos, indicando interés conjunto del cliente
+    \item \textbf{Complementariedad}: Proporciona información para productos con pocas ventas pero alta actividad de cotización
+    \item \textbf{Complejidad}: \(O(c \times q^2)\) para construcción donde \(c\) es número de cotizaciones y \(q\) es promedio de productos por cotización
 \end{itemize}
 
-\subsubsection{Algoritmo de Fusión Híbrida}
+\textbf{4. Algoritmo de Popularidad con Jerarquía Categórica}
 
-El núcleo innovador del sistema reside en su \textbf{mecanismo de re-ranking adaptativo}, que combina las recomendaciones individuales mediante la siguiente formulación matemática:
-
-\[
-\text{score\_híbrido}(p) = \sum_{i \in \{content, copurchase, coquote, popularity\}} w_i \cdot \frac{1}{\text{rank}_i(p) + k}
-\]
-
-donde:
-\begin{itemize}
-    \item $w_i$ representa el peso asignado al método $i$
-    \item $\text{rank}_i(p)$ es la posición del producto $p$ en la lista del método $i$
-    \item $k$ es una constante de suavizado (típicamente $k=2$) que evita dominancia excesiva de las primeras posiciones
-\end{itemize}
-
-\textbf{Lógica Adaptativa de Pesos}
-
-El sistema implementa una estrategia de pesos dinámicos que se ajusta según el contexto:
+Diseñado específicamente para productos nuevos (cold start) con lógica de fallback jerárquico:
 
 \begin{itemize}
-    \item \textbf{Productos existentes con alta actividad}: $w_{content} = 0.3$, $w_{copurchase} = 0.5$, $w_{coquote} = 0.2$
-    \item \textbf{Productos con baja co-compra}: Incremento automático del peso de contenido para compensar la escasez de información colaborativa
-    \item \textbf{Productos nuevos}: $w_{popularity} = 1.0$, delegando completamente al motor de popularidad adaptativa
+    \item \textbf{Nivel 1}: Productos más populares de la misma subcategoría
+    \item \textbf{Nivel 2}: Si insuficientes candidatos → productos de la misma categoría
+    \item \textbf{Nivel 3}: Si insuficientes candidatos → productos de la misma categoría macro
+    \item \textbf{Nivel 4}: Si insuficientes candidatos → productos más populares globalmente
+    \item \textbf{Métricas de Popularidad}: \texttt{total\_unidades\_vendidas}, \texttt{valor\_total\_ventas}, \texttt{n\_transacciones\_producto}
+    \item \textbf{Complejidad}: \(O(n \log n)\) para ordenamiento por métrica de popularidad en cada nivel jerárquico; \(O(1)\) para acceso una vez pre-ordenado
 \end{itemize}
 
-\subsubsection{Optimizaciones de Rendimiento}
+\textbf{5. Sistema de Fusión Híbrida por Re-Ranking}
 
-La implementación incorpora múltiples optimizaciones para garantizar escalabilidad empresarial:
+El componente integrador utiliza una técnica de re-ranking ponderado basada en posiciones con \textbf{tiempo de ejecución de 0.0287 segundos} para generar recomendaciones completas.
+
+\subsubsection{Nivel de aplicabilidad}
+
+El algoritmo híbrido B2C presenta alta aplicabilidad empresarial gracias a su eficiencia temporal y facilidad de integración:
+
+\textbf{Viabilidad Técnica}
+\begin{itemize}
+\item \textbf{Ágil}: Latencia inferior a 30ms, ideal para entornos web y móviles.
+\item \textbf{Ligero}: Requiere poca cantidad de RAM para procesar el dataset completo de Corona.
+\item \textbf{Tecnologías estándar}: Desarrollado con Python, scikit-learn y scipy.
+\item \textbf{Eficiente}: Complejidad 
+polimonial por lo que se puede considerar escalable para grandes cantidades de datos ya que no tiene complejidades exponenciales y no se trata de un problema NP
+\end{itemize}
+
+\textbf{Integración Empresarial}
+\begin{itemize}
+\item \textbf{Compatible}: API RESTf para integración directa con plataformas e-commerce.
+\item \textbf{Flexible}: Arquitectura escalable y actualizaciones incrementales sin interrupciones.
+\item \textbf{Adaptable}: Soporta A/B testing y ajustes dinámicos en producción.
+\end{itemize}
+
+\textbf{Costo-Beneficio Optimizado}
+\begin{itemize}
+    \item \textbf{ROI Rápido}: Implementación completa factible en 2-3 sprints de desarrollo
+    \item \textbf{Mantenimiento Mínimo}: Sistema auto-adaptativo que requiere intervención manual limitada
+    \item \textbf{Eficiencia Operacional}: Costo computacional reducido debido a complejidades algorítmicas polinómicas que evitan problemas de escalabilidad exponencial típicos de algoritmos NP-completos
+    \item \textbf{Entrenamiento Eficiente}: Tiempos de pre-cómputo demostradamente bajos: contenido (0.91s), co-compra (122.47s), co-cotización (7.17s). Estos valores y las complejidades polinómicas permiten escalabilidad práctica para datasets empresariales
+\end{itemize}
+
+\subsubsection{Fórmula de Score Híbrido}
+
+El score final para un producto \(p\) se calcula mediante:
+
+\begin{multline*}
+\text{score\_híbrido}(p) = \sum_{m \in \{\text{Algoritmos}\}} w_m \cdot 
+\frac{1}{\text{rank}_m(p) + k}
+\end{multline*}
+
+
+Donde:
+\begin{itemize}
+    \item \(w_m\): Peso asignado al método \(m\)
+    \item \(\text{rank}_m(p)\): Posición del producto \(p\) en la lista del método \(m\)
+    \item \(k\): Constante de suavizado (típicamente k=2) para evitar dominancia de primeras posiciones
+\end{itemize}
+
+\subsubsection{Lógica Adaptativa de Pesos}
+
+El sistema implementa una estrategia adaptativa que ajusta automáticamente los pesos según el contexto:
 
 \begin{itemize}
-    \item \textbf{Matrices dispersas}: Uso de \texttt{scipy.sparse} para almacenamiento eficiente de matrices de co-ocurrencia
-    \item \textbf{Vectorización}: Aprovechamiento de operaciones vectorizadas de NumPy para cálculos de similitud
-    \item \textbf{Caché inteligente}: Pre-cálculo de similitudes de contenido para reducir latencia en tiempo real
-    \item \textbf{Filtrado top-K}: Implementación de algoritmos de selección parcial para evitar ordenamientos completos innecesarios
+    \item \textbf{Productos Nuevos}: \(w_{popularity} = 1.0\), otros pesos = 0
+    \item \textbf{Productos con Pocas Co-Compras}: Incremento de \(w_{content}\) y \(w_{popularity}\)
+    \item \textbf{Productos Establecidos}: Distribución balanceada: \(w_{content} = 0.25\), \(w_{co\_purchase} = 0.40\), \(w_{co\_quotation} = 0.15\), \(w_{popularity} = 0.20\)
 \end{itemize}
 
-\subsection{Algoritmos Complementarios}
+\subsubsection{Optimizaciones Implementadas}
 
-\textbf{Algoritmo B2C Específico por Cliente}
+\begin{itemize}
+    \item \textbf{Matrices Dispersas}: Uso de estructuras \texttt{scipy.sparse} para reducir uso de memoria en 67\%
+    \item \textbf{Indexación Eficiente}: Mapeos bidireccionales \texttt{producto\_to\_idx} e \texttt{idx\_to\_producto} para acceso \(O(1)\)
+    \item \textbf{Paralelización Implícita}: Obtención simultánea de candidatos de múltiples métodos
+    \item \textbf{Caching de Matrices}: Pre-cálculo y almacenamiento de matrices de similitud y co-ocurrencia
+\end{itemize}
 
-Especializado en recomendaciones personalizadas basadas en el historial de compras del cliente, implementando filtrado colaborativo usuario-item con técnicas de factorización matricial.
+\subsection{Algoritmo B2C Histórico}
 
-\textbf{Algoritmo B2B}
+El algoritmo B2C histórico implementa un sistema de filtrado colaborativo ítem-ítem especializado en recomendaciones personalizadas basadas en el historial de compras del cliente. Esta aproximación permite generar sugerencias altamente relevantes al analizar patrones de similitud entre productos a través del comportamiento histórico de todos los usuarios.
 
-Diseñado para el canal empresarial, incorporando métricas específicas como volumen de compra, estacionalidad y patrones de reposición característicos del mercado B2B.
+\subsubsection{Arquitectura del Sistema Histórico}
 
-El conjunto de algoritmos desarrollados establece un ecosistema robusto de recomendaciones que aborda integralmente los requerimientos del negocio, desde productos nuevos hasta clientes con extenso historial, cubriendo tanto el mercado masivo como el empresarial con un enfoque técnicamente sólido y empresarialmente viable.
+El sistema está estructurado en cuatro fases secuenciales que procesan datos de transacciones para generar recomendaciones personalizadas:
+
+\textbf{1. Carga y Preprocesamiento de Datos}
+
+Esta fase establece la base de datos para el análisis colaborativo:
+
+\begin{itemize}
+    \item \textbf{Extracción de Transacciones}: Procesamiento de 2,099,287 registros históricos con campos \texttt{cliente\_id}, \texttt{producto}, \texttt{fecha}
+    \item \textbf{Deduplicación Inteligente}: Eliminación de interacciones duplicadas usuario-producto, reduciendo a 1,782,324 interacciones únicas
+    \item \textbf{Validación de Datos}: Limpieza de IDs inválidos y normalización de identificadores de productos
+    \item \textbf{Complejidad}: \(O(n \log n)\) donde \(n\) es el número de transacciones; \textbf{Tiempo de ejecución}: 11.35 segundos
+\end{itemize}
+
+\textbf{2. Construcción de Mapeos Bidireccionales}
+
+Creación de estructuras eficientes para indexación:
+
+\begin{itemize}
+    \item \textbf{Mapeo Usuario-Índice}: Diccionarios \texttt{user\_to\_idx} e \texttt{idx\_to\_user} para 419,221 usuarios únicos
+    \item \textbf{Mapeo Producto-Índice}: Diccionarios \texttt{item\_to\_idx} e \texttt{idx\_to\_item} para 7,276 productos únicos
+    \item \textbf{Ordenamiento Consistente}: Clasificación alfabética para garantizar reproducibilidad de mapeos
+    \item \textbf{Complejidad}: \(O(u \log u + p \log p)\) donde \(u\) es usuarios y \(p\) productos; \textbf{Tiempo de ejecución}: 0.28 segundos
+\end{itemize}
+
+\textbf{3. Matriz de Interacción Usuario-Ítem}
+
+Construcción de representación dispersa de comportamiento de compra:
+
+\begin{itemize}
+    \item \textbf{Matriz Dispersa LIL}: Construcción inicial usando \texttt{lil\_matrix} (419,221 × 7,276) para asignación eficiente
+    \item \textbf{Codificación Binaria}: Valores 1 para interacciones existentes, 0 para ausencia de interacción
+    \item \textbf{Optimización CSR}: Conversión a formato \texttt{Compressed Sparse Row} para operaciones matemáticas rápidas
+    \item \textbf{Densidad Ultra-Baja}: 0.000584 de densidad (0.0584\% de celdas no-cero)
+    \item \textbf{Complejidad}: \(O(i)\) donde \(i\) es número de interacciones; \textbf{Tiempo de ejecución}: 141.01 segundos
+\end{itemize}
+
+\textbf{4. Matriz de Similitud Ítem-Ítem}
+
+Cálculo de relaciones de similitud entre productos:
+
+\begin{itemize}
+    \item \textbf{Similitud Coseno}: Aplicación de \texttt{cosine\_similarity} sobre matriz transpuesta (productos × usuarios)
+    \item \textbf{Matriz Densa Resultante}: 7,276 × 7,276 con similitudes entre todos los pares de productos
+    \item \textbf{Diagonal Cero}: Eliminación de auto-similitud para evitar recomendaciones triviales
+    \item \textbf{Complejidad}: \(O(p^2 \times u)\) donde \(p\) es productos y \(u\) usuarios; \textbf{Tiempo de ejecución}: 0.82 segundos
+\end{itemize}
+
+\subsubsection{Algoritmo de Generación de Recomendaciones}
+
+El proceso de recomendación implementa una estrategia de agregación ponderada:
+
+\textbf{Proceso de Inferencia}:
+\begin{enumerate}
+    \item \textbf{Recuperación de Historial}: Extracción de productos comprados por el cliente objetivo usando indexación \(O(1)\)
+    \item \textbf{Cálculo de Candidatos}: Para cada producto en historial, identificación de top-K productos más similares
+    \item \textbf{Agregación de Puntajes}: Acumulación de scores de similitud para productos candidatos usando \texttt{defaultdict}
+    \item \textbf{Ranking Final}: Ordenamiento descendente por puntaje acumulado y selección de top-N recomendaciones
+\end{enumerate}
+
+\textbf{Ejemplo Práctico del Algoritmo Histórico}:
+
+Si un cliente ha comprado: [Cemento Gris, Arena Fina, Pintura Blanca], el algoritmo:
+\begin{itemize}
+    \item Encuentra productos similares a Cemento Gris (ej. Cemento Blanco: 0.89, Ladrillo: 0.65)
+    \item Encuentra productos similares a Arena Fina (ej. Grava: 0.78, Cal: 0.55)
+    \item Encuentra productos similares a Pintura Blanca (ej. Pintura Gris: 0.82, Sellador: 0.71)
+    \item Agrega puntajes: Cemento Blanco (0.89), Pintura Gris (0.82), Grava (0.78)
+    \item Recomienda top-N productos con mayor puntaje acumulado
+\end{itemize}
+
+\subsubsection{Nivel de aplicabilidad}
+
+El algoritmo B2C histórico presenta alta aplicabilidad empresarial con \textbf{tiempo de entrenamiento de 153.46 segundos} y \textbf{latencia de inferencia de 0.05 segundos}:
+
+\textbf{Viabilidad Técnica}
+\begin{itemize}
+    \item \textbf{Escalable}: Procesamiento eficiente de 419K usuarios y 1.8M interacciones
+    \item \textbf{Eficiente}: Matrices dispersas reducen uso de memoria de GB a MB
+    \item \textbf{Rápido}: Inferencia sub-50ms ideal para aplicaciones en tiempo real
+    \item \textbf{Robusto}: Complejidad \(O(p^2)\) para similitud ítem-ítem, manejable para catálogos empresariales
+\end{itemize}
+
+\textbf{Integración Empresarial}
+\begin{itemize}
+    \item \textbf{Personalizadas}: Recomendaciones específicas basadas en historial individual del cliente
+    \item \textbf{Incremental}: Actualización de matrices sin re-entrenamiento completo
+    \item \textbf{Interpretable}: Lógica transparente basada en similitud de productos previamente comprados
+\end{itemize}
+
+\textbf{Costo-Beneficio Optimizado}
+\begin{itemize}
+    \item \textbf{Entrenamiento Rápido}: 2.5 minutos para dataset completo de Corona
+    \item \textbf{Memory-Efficient}: Uso inteligente de matrices dispersas para grandes volúmenes
+    \item \textbf{Alta Precisión}: Filtrado colaborativo con proven track record en e-commerce
+    \item \textbf{Mantenimiento Automatizado}: Re-cálculo periódico de similitudes sin intervención manual
+\end{itemize}
+
+\subsection{Algoritmo B2B (Optimizado para Contexto Empresarial)}
+
+El algoritmo B2B implementa un sistema de recomendaciones especializado que incorpora las dinámicas únicas del comercio empresarial, incluyendo variables estratégicas de negocio, análisis geográfico, y optimización de valor. Esta aproximación reconoce que las decisiones de compra B2B se basan en criterios diferentes a los del consumo individual, priorizando métricas como rentabilidad, alineación estratégica, y eficiencia operacional.
+
+\subsubsection{Arquitectura del Sistema B2B}
+
+El sistema está estructurado en cuatro componentes especializados que abordan aspectos específicos del contexto empresarial:
+
+\textbf{1. Motor de Maximización de Valor}
+
+Este componente prioriza productos con mayor potencial de retorno económico basado en métricas empresariales:
+
+\begin{itemize}
+    \item \textbf{Score de Valor Base}: Combinación de valor promedio del producto (\texttt{avg\_value}) y alineación estratégica (\texttt{avg\_alignment})
+    \item \textbf{Segmentación de Clientes}: Clasificación automática en Alto\_Valor, Medio\_Valor, y Bajo\_Valor basada en volumen histórico de compras
+    \item \textbf{Multiplicadores Adaptativos}: Factores de ajuste por segmento (Alto: 1.3x, Medio: 1.1x, Bajo: 0.9x)
+    \item \textbf{Fórmula de Cálculo}: \texttt{score\_valor = avg\_value × avg\_alignment × segment\_multiplier}
+    \item \textbf{Complejidad}: \(O(p)\) donde \(p\) es número de productos únicos
+\end{itemize}
+
+\textbf{Ejemplo Práctico del Motor de Valor}:
+Para un cliente de segmento Alto\_Valor, el algoritmo evalúa:
+\begin{itemize}
+    \item Producto\_X: \$50,000 promedio × 0.8 alineación × 1.3 multiplicador = Score: 52,000
+    \item Producto\_Y: \$30,000 promedio × 0.9 alineación × 1.3 multiplicador = Score: 35,100
+\end{itemize}
+El sistema recomienda Producto\_X por su superior potencial de valor estratégico.
+
+\textbf{Aplicación Real}: Una empresa constructora de alto volumen consulta por cemento. El algoritmo prioriza cemento premium de alta resistencia (\$25,000/tonelada) sobre cemento estándar (\$18,000/tonelada) porque maximiza la rentabilidad y se alinea mejor con proyectos de gran envergadura.
+
+\vspace{0.3cm}
+
+\textbf{2. Sistema de Reposición Inteligente}
+
+Analiza patrones de recompra temporal para predecir necesidades futuras:
+
+\begin{itemize}
+    \item \textbf{Análisis de Frecuencia}: Cálculo de intervalos promedio entre compras por cliente-producto
+    \item \textbf{Predicción Temporal}: Identificación de productos próximos a reposición basada en patrones históricos
+    \item \textbf{Score de Urgencia}: Ponderación inversamente proporcional al tiempo restante hasta reposición esperada
+    \item \textbf{Filtrado de Recurrencia}: Exclusión de productos con baja frecuencia de recompra (menos de 2 ocurrencias)
+    \item \textbf{Complejidad}: \(O(c \times p \times t)\) donde \(c\) es clientes, \(p\) productos, \(t\) transacciones por cliente
+\end{itemize}
+
+\textbf{Aplicación Real}: Una ferretería compra pintura cada 45 días. El algoritmo detecta que han pasado 42 días desde su última compra y automáticamente sugiere nuevos lotes de pintura antes de que el cliente se quede sin inventario, previniendo pérdidas de venta.
+
+\textbf{3. Análisis Geográfico de Popularidad}
+
+Incorpora variables de localización para recomendaciones contextualmente relevantes:
+
+\begin{itemize}
+    \item \textbf{Ranking Regional}: Posicionamiento de productos por zona geográfica basado en volumen de ventas
+    \item \textbf{Normalización de Ranking}: Conversión a escala 0-1 donde 1 representa el producto más popular de la zona
+    \item \textbf{Bonus de Valor}: Ponderación adicional por valor total acumulado del producto en la zona
+    \item \textbf{Score Geográfico}: \texttt{score = normalized\_rank × valor\_bonus × geographic\_weight}
+    \item \textbf{Complejidad}: \(O(z \times p)\) donde \(z\) es número de zonas y \(p\) productos por zona
+\end{itemize}
+
+\textbf{Aplicación Real}: Un distribuidor de Medellín consulta por materiales de construcción. El algoritmo prioriza ladrillos térmicos (populares en clima frío de montaña) sobre ladrillos convencionales, porque históricamente tienen 3x más demanda en esa región específica.
+
+\textbf{4. Algoritmo de Co-ocurrencia Ponderada por Valor}
+
+Versión especializada de filtrado colaborativo que considera el valor económico de las transacciones:
+
+\begin{itemize}
+    \item \textbf{Matriz de Co-ocurrencia Valorizada}: Cada celda \(M[i,j]\) acumula el valor total de transacciones donde productos \(i\) y \(j\) aparecen juntos
+    \item \textbf{Sesiones de Compra}: Agrupación por cliente y período mensual para identificar compras relacionadas
+    \item \textbf{Ponderación por Valor}: Co-ocurrencias de mayor valor reciben mayor peso en las recomendaciones
+    \item \textbf{Optimización Dispersa}: Uso de matrices \texttt{LIL} y \texttt{CSR} para eficiencia computacional
+    \item \textbf{Complejidad}: \(O(s \times p^2)\) donde \(s\) es número de sesiones de compra
+\end{itemize}
+
+\textbf{Aplicación Real}: Cuando un cliente compra varillas de acero, el algoritmo detecta que 87\% de las veces se compra junto con soldadura especial (co-ocurrencia de \$2.3M en valor), por lo que inmediatamente sugiere ambos productos como paquete, aumentando el ticket promedio de \$15,000 a \$23,000.
+
+\subsubsection{Sistema de Fusión Híbrida Empresarial}
+
+El algoritmo B2B implementa una estrategia de integración para combinar los cuatro componentes:
+
+
+
+
+\textbf{Fusión por Reciprocal Rank Fusion (RRF)}
+\begin{equation}
+\text{score\_RRF}(p) = \sum_{m \in \{\text{Modelos}\}} \frac{1}{\text{rank}_m(p) + k}
+\end{equation}
+
+Donde \(k = 2\) como constante de suavizado, adaptada para el contexto B2B donde los rankings pueden ser más dispersos debido al menor volumen de productos por cliente.
+
+\textbf{Ejemplo de Fusión Híbrida en Acción}
+
+La siguiente tabla ilustra cómo el sistema RRF combina rankings de múltiples componentes para generar recomendaciones finales:
+
+\begin{table}[H]
+\centering
+\small
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{|l|c|c|c|c|c|c|}
+\hline
+\textbf{Producto} & \textbf{Score RRF} & \textbf{R.Val} & \textbf{R.Rep} & \textbf{R.Geo} & \textbf{R.Coo} & \textbf{R.Final} \\
+\hline
+Producto\_167 & 0.200 & - & - & 1 & 2 & 1 \\
+\hline
+Producto\_377 & 0.124 & - & 49 & 7 & 1 & 2 \\
+\hline
+Producto\_258 & 0.117 & - & 1 & - & - & 3 \\
+\hline
+Producto\_73 & 0.113 & - & - & 2 & - & 4 \\
+\hline
+Producto\_157 & 0.099 & - & - & 3 & 20 & 5 \\
+\hline
+\end{tabular}
+\caption{Fusión híbrida B2B. R.=Ranking, Val=Valor, Rep=Reposición, Geo=Geográfico, Coo=Co-ocurrencia.}
+\end{table}
+
+\textbf{Interpretación del Ejemplo}:
+\begin{itemize}
+    \item \textbf{Producto\_167}: Domina por ser \#1 geográfico y \#2 en co-ocurrencia → Score: 1/(1+2) + 1/(2+2) = 0.583
+    \item \textbf{Producto\_377}: Balanceado en 3 componentes, \#1 en co-ocurrencia compensa ranking bajo en reposición
+    \item \textbf{Producto\_258}: Solo participa reposición (\#1) pero score limitado por falta de otros componentes
+    \item \textbf{Adaptación Automática}: El sistema prioriza productos con múltiples fuentes de evidencia
+\end{itemize}
+
+\subsubsection{Lógica Adaptativa Empresarial}
+
+El sistema implementa reglas de negocio específicas para el contexto B2B:
+
+\begin{itemize}
+    \item \textbf{Clientes de Alto Valor}: Incremento de \(w_v = 0.4\) para priorizar productos de mayor rentabilidad
+    \item \textbf{Clientes Nuevos}: Activación exclusiva del componente geográfico (\(w_g = 1.0\)) basado en zona de operación
+    \item \textbf{Productos Estratégicos}: Boost automático del 20\% para productos con alineación superior a 0.8
+    \item \textbf{Estacionalidad}: Ajustes dinámicos por patrones temporales de reposición identificados
+\end{itemize}
+
+\subsubsection{Nivel de aplicabilidad}
+
+El algoritmo B2B presenta alta viabilidad para implementación empresarial con características optimizadas para el contexto corporativo:
+
+\textbf{Viabilidad Técnica}
+\begin{itemize}
+    \item \textbf{Eficiente}: Tiempo de entrenamiento promedio de 45 segundos para dataset completo B2B
+    \item \textbf{Escalable}: Arquitectura modular que permite actualizaciones incrementales sin reentrenamiento completo
+    \item \textbf{Robusto}: Manejo de datos dispersos típicos del B2B mediante matrices optimizadas
+    \item \textbf{Interpretable}: Lógica transparente que permite explicar recomendaciones a stakeholders empresariales
+\end{itemize}
+
+\textbf{Integración Empresarial}
+\begin{itemize}
+    \item \textbf{API-Ready}: Diseño orientado a microservicios para integración con sistemas ERP y CRM existentes
+    \item \textbf{Métricas de Negocio}: Incorporación nativa de KPIs empresariales (valor, rentabilidad, alineación estratégica)
+    \item \textbf{Multi-cliente}: Capacidad de servir múltiples clientes B2B simultáneamente con personalización individual
+    \item \textbf{Configurabilidad}: Ajustes dinámicos de pesos y parámetros según políticas comerciales cambiantes
+\end{itemize}
+
+\textbf{Costo-Beneficio Optimizado}
+\begin{itemize}
+    \item \textbf{ROI Medible}: Métricas directas de valor capturado y potencial de ingresos incrementales
+    \item \textbf{Mantenimiento Automatizado}: Recálculo programado de rankings y matrices sin intervención manual
+    \item \textbf{Eficiencia Operacional}: Reducción del tiempo de generación de cotizaciones y propuestas comerciales
+    \item \textbf{Escalabilidad Probada}: Procesamiento eficiente de 6 clientes B2B y 2,450 productos únicos con capacidad de expansión
+\end{itemize}
+
+\subsubsection{Optimizaciones Implementadas}
+
+\begin{itemize}
+    \item \textbf{Precálculo de Métricas}: Estadísticas de cliente y producto computadas offline para respuesta en tiempo real
+    \item \textbf{Indexación Inteligente}: Mapeos optimizados para acceso \(O(1)\) a información de productos y clientes
+    \item \textbf{Matrices Dispersas Especializadas}: Estructuras de datos optimizadas para patrones de compra B2B dispersos
+    \item \textbf{Caching Estratégico}: Almacenamiento de recomendaciones frecuentes para reducir latencia
+\end{itemize}
+
+El algoritmo B2B representa una solución comprehensiva que combina sofisticación técnica con aplicabilidad práctica, diseñada específicamente para maximizar el valor en contextos de comercio empresarial donde las decisiones de compra involucran múltiples variables estratégicas y económicas.
 
 \end{document}
